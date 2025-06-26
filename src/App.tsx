@@ -7,6 +7,7 @@ import { ReviewMetricsChart } from './components/ReviewMetricsChart'
 import { UserMetricsChart } from './components/UserMetricsChart'
 import { FilterControls } from './components/FilterControls'
 import { DataSizeWarning } from './components/DataSizeWarning'
+import { DateRangeInfo } from './components/DateRangeInfo'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useGitHubData } from './hooks/useGitHubData'
 import './App.css'
@@ -96,6 +97,7 @@ function GitHubReviewInsights() {
               </div>
             ) : (
               <>
+                <DateRangeInfo dataSize={dataSize} />
                 <DataSizeWarning dataSize={dataSize} isProcessing={isProcessing} />
                 
                 <ErrorBoundary>

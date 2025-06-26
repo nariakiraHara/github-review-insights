@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@apollo/client';
-import { differenceInMinutes, startOfWeek, parseISO } from 'date-fns';
+import { differenceInMinutes, startOfWeek, parseISO, subMonths, formatISO } from 'date-fns';
 import { GET_PULL_REQUESTS } from '../lib/github-queries';
 import type { PullRequest, ReviewMetrics, WeeklyMetrics, WeeklyUserMetrics, ReviewerMetrics, RevieweeMetrics } from '../types/github';
 
@@ -24,8 +24,18 @@ export const useGitHubData = ({ owner, repo }: UseGitHubDataProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [dataSize, setDataSize] = useState(0);
 
+  // Calculate date for 1 month ago
+  const oneMonthAgo = useMemo(() => {
+    const date = subMonths(new Date(), 1);
+    return formatISO(date, { representation: 'date' });
+  }, []);
+
   const { data, loading, error } = useQuery(GET_PULL_REQUESTS, {
-    variables: { owner, name: repo, first: 100 }, // Conservative limit to prevent issues
+    variables: { 
+      owner, 
+      name: repo, 
+      first: 100 // Can increase since we're limiting by date client-side
+    },
     skip: !owner || !repo,
     errorPolicy: 'all',
     fetchPolicy: 'cache-and-network',
@@ -35,12 +45,20 @@ export const useGitHubData = ({ owner, repo }: UseGitHubDataProps) => {
   useEffect(() => {
     if (!data?.repository?.pullRequests?.nodes) return;
 
-    const prs: PullRequest[] = data.repository.pullRequests.nodes;
-    setDataSize(prs.length);
+    const allPrs: PullRequest[] = data.repository.pullRequests.nodes;
+    
+    // Filter PRs to only include those from the last month
+    const oneMonthAgoDate = parseISO(oneMonthAgo);
+    const recentPrs = allPrs.filter(pr => {
+      const createdAt = parseISO(pr.createdAt);
+      return createdAt >= oneMonthAgoDate;
+    });
+    
+    setDataSize(recentPrs.length);
     
     // Show warning for large datasets
-    if (prs.length > 150) {
-      console.warn(`Large dataset detected: ${prs.length} PRs. This may cause performance issues.`);
+    if (recentPrs.length > 150) {
+      console.warn(`Large dataset detected: ${recentPrs.length} PRs. This may cause performance issues.`);
     }
     
     setIsProcessing(true);
@@ -50,14 +68,14 @@ export const useGitHubData = ({ owner, repo }: UseGitHubDataProps) => {
       try {
         const calculatedMetrics: ReviewMetrics[] = [];
 
-    prs.forEach((pr) => {
+    recentPrs.forEach((pr) => {
       if (!pr.mergedAt) return;
 
       const createdAt = parseISO(pr.createdAt);
       const mergedAt = parseISO(pr.mergedAt);
       
       // Find first review
-      const firstReview = pr.reviews.nodes
+      const firstReview = pr.reviews?.nodes
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         .find(review => review.state === 'APPROVED' || review.state === 'CHANGES_REQUESTED');
 
@@ -241,7 +259,7 @@ export const useGitHubData = ({ owner, repo }: UseGitHubDataProps) => {
         setIsProcessing(false);
       }
     }, 100); // Small delay to prevent UI blocking
-  }, [data]);
+  }, [data, oneMonthAgo]);
 
   // Memoize filtered metrics to prevent unnecessary recalculations
   const filteredMetrics = useMemo(() => {

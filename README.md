@@ -1,69 +1,56 @@
-# React + TypeScript + Vite
+# GitHub Review Insights
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React application that visualizes GitHub pull request review metrics to help teams understand their code review performance.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Review Time Metrics**: Track time from PR creation to first review and from review to merge
+- **Weekly Aggregation**: View metrics aggregated by week to identify trends
+- **Interactive Charts**: Line and bar charts powered by Recharts
+- **GitHub GraphQL Integration**: Fetches data directly from GitHub's GraphQL API
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+2. **Configure Environment Variables**:
+   - Create a GitHub Personal Access Token at [GitHub Settings](https://github.com/settings/tokens)
+   - Required scopes: `repo` (for private repos) or `public_repo` (for public repos only)
+   - Copy `.env.example` to `.env` and configure:
+     ```
+     VITE_GITHUB_TOKEN=your_github_token_here
+     VITE_GITHUB_ORG=your_organization_name
+     ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+3. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Usage
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. Enter a GitHub repository name (organization is configured via environment variable)
+2. Click "Analyze" to fetch and process the data
+3. View the metrics:
+   - **Request to Review Time**: Time from PR creation to first review
+   - **Review to Merge Time**: Time from first review to merge
+   - **Weekly trends**: Charts showing performance over time
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Development
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview production build
+
+## Architecture
+
+- **React 19** with TypeScript
+- **Apollo Client** for GraphQL queries
+- **Recharts** for data visualization
+- **Tailwind CSS** for styling
+- **date-fns** for date manipulation
+- **Vite** for build tooling
